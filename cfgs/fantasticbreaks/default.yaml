@@ -1,0 +1,80 @@
+# ============================================================================ #
+# FantasticBreaks Binary Classification — default config
+# Classes:  0 = complete,  1 = broken
+# Dataset:  240 train / 60 test  (perfectly balanced)
+# ============================================================================ #
+
+# ---------------------------------------------------------------------------- #
+# Dataset
+# ---------------------------------------------------------------------------- #
+dataset:
+  common:
+    NAME: FantasticBreaksCls
+    data_dir: ../../data/classification   # Relative path to root data/
+    num_points: 8192                # points subsampled per sample at runtime
+  train:
+    split: train
+  val:
+    split: test
+
+num_points: 8192    # points passed into the model
+num_classes: &nclass
+  2
+
+feature_keys: pos   # only XYZ; dataset sets x = pos
+
+# ---------------------------------------------------------------------------- #
+# Data augmentation
+# ---------------------------------------------------------------------------- #
+datatransforms:
+  train: [PointsToTensor, PointCloudScaling, PointCloudCenterAndNormalize, PointCloudRotation]
+  val:   [PointsToTensor, PointCloudCenterAndNormalize]
+  kwargs:
+    scale:       [0.8, 1.2]
+    angle:       [0.0, 1.0, 0.0]   # rotate around Y (gravity) axis only
+    gravity_dim: 1
+    jitter_sigma: 0.01
+    jitter_clip: 0.05
+
+# ---------------------------------------------------------------------------- #
+# DataLoader
+# ---------------------------------------------------------------------------- #
+# 240 train samples → batch_size=8 gives 30 steps/epoch (clean, no drop_last needed)
+batch_size:     8
+val_batch_size: 16
+dataloader:
+  num_workers: 4
+
+# ---------------------------------------------------------------------------- #
+# Loss
+# ---------------------------------------------------------------------------- #
+criterion_args:
+  NAME: SmoothCrossEntropy
+  label_smoothing: 0.1   # conservative smoothing for small binary dataset
+
+# ---------------------------------------------------------------------------- #
+# Optimizer & scheduler
+# ---------------------------------------------------------------------------- #
+lr: 0.0001
+optimizer:
+  NAME: adamw
+  weight_decay: 0.01
+
+sched:         cosine
+epochs:        100
+warmup_epochs: 3
+min_lr:        1.0e-6
+
+grad_norm_clip: 10
+
+# ---------------------------------------------------------------------------- #
+# io and misc
+# ---------------------------------------------------------------------------- #
+log_dir: fantasticbreaks
+print_freq: 10
+val_freq:   1
+
+pretrained_path: null
+
+wandb:
+  project: PointNeXt-FantasticBreaks

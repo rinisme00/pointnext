@@ -1,3 +1,4 @@
+import __init__
 import os, logging, csv, numpy as np, wandb
 from tqdm import tqdm
 import torch, torch.nn as nn
@@ -248,12 +249,16 @@ def train_one_epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
         if num_curr_pts > npoints:  # point resampling strategy
             if npoints == 1024:
                 point_all = 1200
+            elif npoints == 2048:
+                point_all = 2400
             elif npoints == 4096:
                 point_all = 4800
             elif npoints == 8192:
                 point_all = 8192
             else:
-                raise NotImplementedError()
+                point_all = int(npoints * 1.2)
+                if point_all > num_curr_pts:
+                    point_all = num_curr_pts
             if  points.size(1) < point_all:
                 point_all = points.size(1)
             fps_idx = furthest_point_sample(
