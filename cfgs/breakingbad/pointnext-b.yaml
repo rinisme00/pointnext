@@ -1,0 +1,56 @@
+_base_: default.yaml
+# PointNeXt-B for Breaking Bad binary classification
+# Base variant — width=32, moderate depth
+# Optimized for Single GPU (RTX 3090 24GB)
+#
+# Train:  python examples/classification/main.py \
+#           --cfg cfgs/breakingbad/pointnext-b.yaml
+
+model:
+  NAME: BaseCls
+  encoder_args:
+    NAME: PointNextEncoder
+    blocks: [1, 2, 3, 2, 2, 1]     # B variant: [1, 2, 3, 2, 2, 1]
+    strides: [1, 2, 2, 2, 2, 1]
+    width: 32                      # B variant width
+    in_channels: 3                 # XYZ only
+    sa_layers: 2
+    sa_use_res: True
+    radius: 0.15
+    radius_scaling: 1.5
+    nsample: 32
+    expansion: 4
+    aggr_args:
+      feature_type: 'dp_fj'
+      reduction: 'max'
+    group_args:
+      NAME: 'ballquery'
+      normalize_dp: True
+    conv_args:
+      order: conv-norm-act
+    act_args:
+      act: 'relu'
+    norm_args:
+      norm: 'bn'
+  cls_args:
+    NAME: ClsHead
+    num_classes: 2                 # 0 = complete, 1 = broken
+    mlps: [512, 256]
+    norm_args:
+      norm: 'bn1d'
+
+# ---------------------------------------------------------------------------- #
+# Single GPU Optimization Overrides
+# ---------------------------------------------------------------------------- #
+batch_size: 32                     # PointNeXt-B fits easily in 24GB at batch 32
+val_batch_size: 32
+step_per_update: 1                 # No accumulation needed for single GPU
+sync_bn: False                     # Not needed for single GPU
+
+lr: 0.002                          # Standard for total batch size 32
+optimizer:
+  NAME: adamw
+  weight_decay: 0.05               # Standard weight decay for PointNeXt
+
+wandb:
+  tags: [pointnext-b, breakingbad, pretraining, single-gpu]

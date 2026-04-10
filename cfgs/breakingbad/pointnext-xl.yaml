@@ -1,0 +1,40 @@
+_base_: default.yaml
+# PointNeXt-XL for Breaking Bad binary classification (pretraining)
+# Largest PointNeXt variant — width=64, deep blocks
+# Estimated ~41M params,  ~14-18GB VRAM on RTX 3090 (24GB)
+#
+# Train:  CUDA_VISIBLE_DEVICES=3 python examples/classification/main.py \
+#           --cfg cfgs/breakingbad/pointnext-xl.yaml
+
+model:
+  NAME: BaseCls
+  encoder_args:
+    NAME: PointNextEncoder
+    blocks: [1, 4, 7, 4, 4, 1]
+    strides: [1, 2, 2, 2, 2, 1]
+    width: 64                      # 2× wider than S/B/L variants
+    in_channels: 3                 # XYZ only
+    sa_layers: 2
+    sa_use_res: True
+    radius: 0.15
+    radius_scaling: 1.5
+    nsample: 32
+    expansion: 4
+    aggr_args:
+      feature_type: 'dp_fj'
+      reduction: 'max'
+    group_args:
+      NAME: 'ballquery'
+      normalize_dp: True
+    conv_args:
+      order: conv-norm-act
+    act_args:
+      act: 'relu'
+    norm_args:
+      norm: 'bn'
+  cls_args:
+    NAME: ClsHead
+    num_classes: 2                 # 0 = complete, 1 = broken
+    mlps: [512, 256]
+    norm_args:
+      norm: 'bn1d'

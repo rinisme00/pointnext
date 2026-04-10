@@ -1,0 +1,90 @@
+# ============================================================================ #
+# Breaking Bad Binary Classification — default config
+# Pretrain on artifact + everyday/Vase subsets
+# Classes:  0 = complete (mode_0/piece_0.obj),  1 = broken (fractured_0/piece_*.obj)
+# Dataset:  494 train / 122 val  (balanced via undersampling)
+# ============================================================================ #
+
+# ---------------------------------------------------------------------------- #
+# Dataset
+# ---------------------------------------------------------------------------- #
+# Reuses FantasticBreaksCls adapter — same HDF5 format (data/label)
+dataset:
+  common:
+    NAME: FantasticBreaksCls
+    data_dir: ../../data/breakingbad_classification
+    num_points: 8192
+  train:
+    split: train
+  val:
+    split: test
+
+num_points: 8192
+num_classes: &nclass
+  2
+
+feature_keys: pos   # only XYZ; dataset sets x = pos
+
+# ---------------------------------------------------------------------------- #
+# Data augmentation
+# ---------------------------------------------------------------------------- #
+datatransforms:
+  train: [PointsToTensor, PointCloudScaling, PointCloudCenterAndNormalize, PointCloudRotation]
+  val:   [PointsToTensor, PointCloudCenterAndNormalize]
+  kwargs:
+    scale:       [0.8, 1.2]
+    angle:       [0.0, 1.0, 0.0]   # rotate around Y (gravity) axis only
+    gravity_dim: 1
+    jitter_sigma: 0.01
+    jitter_clip: 0.05
+
+# ---------------------------------------------------------------------------- #
+# DataLoader
+# ---------------------------------------------------------------------------- #
+# 494 train samples → batch_size=2 gives ~247 steps/epoch
+# batch_size=2 to accommodate PointNeXt-XL (width=64) on 24GB RTX 3090
+batch_size:     2
+val_batch_size: 2
+dataloader:
+  num_workers: 4
+
+use_amp: True        # Enable Mixed Precision to save VRAM
+step_per_update: 2   # Accumulate 2 steps to maintain total batch size of 16 (2 * 4 GPUs * 2 steps)
+sync_bn: True
+
+# ---------------------------------------------------------------------------- #
+# Loss
+# ---------------------------------------------------------------------------- #
+criterion_args:
+  NAME: SmoothCrossEntropy
+  label_smoothing: 0.1
+
+# ---------------------------------------------------------------------------- #
+# Optimizer & scheduler
+# ---------------------------------------------------------------------------- #
+lr: 0.002               # Balanced for total batch size 16 (4x4)
+optimizer:
+  NAME: adamw
+  weight_decay: 0.05   # stronger regularization for XL model
+
+sched:         cosine
+epochs:        150      # more epochs for pretraining from scratch
+warmup_epochs: 10
+min_lr:        1.0e-6
+
+grad_norm_clip: 10
+
+# ---------------------------------------------------------------------------- #
+# io and misc
+# ---------------------------------------------------------------------------- #
+log_dir: breakingbad
+print_freq: 10
+val_freq:   1
+
+pretrained_path: null
+
+wandb:
+  use_wandb: True
+  project: breaking-bad-pretraining
+  entity: null
+  tags: [pointnext-xl, breakingbad, pretraining]
