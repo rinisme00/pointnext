@@ -62,7 +62,7 @@ criterion_args:
 # ---------------------------------------------------------------------------- #
 # Optimizer & scheduler
 # ---------------------------------------------------------------------------- #
-lr: 0.002               # Balanced for total batch size 16 (4x4)
+lr: 0.002               # Reverted for stability
 optimizer:
   NAME: adamw
   weight_decay: 0.05   # stronger regularization for XL model
