@@ -1,0 +1,5 @@
+Inference Results Summary
+==========================
+Checkpoint: log/breakingbad/breakingbad-train-pointnext-b-ngpus1-seed6697-20260411-045652-C6PPxgZ6gqiaCgY94LtQj4/checkpoint/breakingbad-train-pointnext-b-ngpus1-seed6697-20260411-045652-C6PPxgZ6gqiaCgY94LtQj4_ckpt_best.pth
+Overall Accuracy: 58.33%
+Mean Class Accuracy: 58.33%

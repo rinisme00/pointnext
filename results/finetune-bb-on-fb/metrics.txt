@@ -1,0 +1,5 @@
+Inference Results Summary
+==========================
+Checkpoint: log/fantasticbreaks/fantasticbreaks-finetune-pointnext-b-ngpus1-seed4788-20260416-001928-6tpaLMaktKyMqQbNAzqjF6/checkpoint/fantasticbreaks-finetune-pointnext-b-ngpus1-seed4788-20260416-001928-6tpaLMaktKyMqQbNAzqjF6_ckpt_best.pth
+Overall Accuracy: 75.00%
+Mean Class Accuracy: 75.00%
