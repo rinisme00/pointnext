@@ -12,8 +12,9 @@
 dataset:
   common:
     NAME: FantasticBreaksCls
-    data_dir: ../../data/breakingbad_classification
+    data_dir: ../../data/breakingbad_classification   # enriched HDF5 directory
     num_points: 8192
+    enriched: True                                             # load *_data_enriched.h5 ([B, N, 11])
   train:
     split: train
   val:
@@ -23,7 +24,7 @@ num_points: 8192
 num_classes: &nclass
   2
 
-feature_keys: pos   # only XYZ; dataset sets x = pos
+feature_keys: pos   # pos = XYZ; geometric features (k1,k2,H,K,sa_v,dist,density,boundary_dist) added by adapter
 
 # ---------------------------------------------------------------------------- #
 # Data augmentation

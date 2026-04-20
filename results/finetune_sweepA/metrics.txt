@@ -1,5 +1,0 @@
-Inference Results Summary
-==========================
-Checkpoint: /storage/student6/dev/3D-Segmentation-Restoration/src/pointnext/log/fantasticbreaks/fantasticbreaks-finetune-pointnext-b-ngpus1-seed7636-20260416-010942-A4LKdfoaZtDcL86GPT26Tm/checkpoint/fantasticbreaks-finetune-pointnext-b-ngpus1-seed7636-20260416-010942-A4LKdfoaZtDcL86GPT26Tm_ckpt_best.pth
-Overall Accuracy: 73.33%
-Mean Class Accuracy: 73.33%

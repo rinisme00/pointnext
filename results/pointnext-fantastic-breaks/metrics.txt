@@ -1,5 +1,0 @@
-Inference Results Summary
-==========================
-Checkpoint: log/fantasticbreaks/fantasticbreaks-train-pointnext-b-ngpus1-seed9284-20260415-123555-HBxQUTN8vbvnr5fwGeEKeo/checkpoint/fantasticbreaks-train-pointnext-b-ngpus1-seed9284-20260415-123555-HBxQUTN8vbvnr5fwGeEKeo_ckpt_best.pth
-Overall Accuracy: 81.67%
-Mean Class Accuracy: 81.67%

@@ -9,7 +9,7 @@ model:
     blocks: [1, 1, 1, 1, 1, 1]
     strides: [1, 2, 2, 2, 2, 1]
     width: 32
-    in_channels: 3         # XYZ only — dataset feeds pos as x
+    in_channels: 10        # XYZ (3) + k1 + k2 + H + K + sa_v_ratio + dist_centroid + local_density (7)
     sa_layers: 2
     sa_use_res: True
     radius: 0.15
