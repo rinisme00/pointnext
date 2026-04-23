@@ -10,8 +10,9 @@
 dataset:
   common:
     NAME: FantasticBreaksCls
-    data_dir: ../../data/classification   # Relative path to root data/
+    data_dir: ../../data/fantastic-breaks-classification   # enriched HDF5 directory
     num_points: 8192                # points subsampled per sample at runtime
+    enriched: True                  # load *_data_enriched.h5 ([B, N, 11] features)
   train:
     split: train
   val:
@@ -21,7 +22,7 @@ num_points: 8192    # points passed into the model
 num_classes: &nclass
   2
 
-feature_keys: pos   # only XYZ; dataset sets x = pos
+feature_keys: pos   # pos = XYZ; geometric features (k1,k2,H,K,sa_v,dist,density,boundary_dist) added by adapter
 
 # ---------------------------------------------------------------------------- #
 # Data augmentation
@@ -49,20 +50,25 @@ dataloader:
 # Loss
 # ---------------------------------------------------------------------------- #
 criterion_args:
-  NAME: SmoothCrossEntropy
+  NAME: LabelSmoothingCrossEntropy
   label_smoothing: 0.1   # conservative smoothing for small binary dataset
+  weight: [1.0, 1.5]     # prioritize 'broken' class (index 1) recall
 
 # ---------------------------------------------------------------------------- #
 # Optimizer & scheduler
 # ---------------------------------------------------------------------------- #
-lr: 0.0001
+lr: 0.0005              # increased for head adaptation
 optimizer:
   NAME: adamw
   weight_decay: 0.01
+  filter_by_modules_names:
+    encoder:
+      lr_scale: 0.1     # protect pretrained features by learning 10x slower on backbone
 
 sched:         cosine
-epochs:        100
-warmup_epochs: 3
+epochs:        150      # increased to allow 20 freeze epochs + recovery
+freeze_epochs: 20       # stabilize classification head first
+warmup_epochs: 5        # gentle warmup for stable gradients
 min_lr:        1.0e-6
 
 grad_norm_clip: 10
@@ -77,4 +83,7 @@ val_freq:   1
 pretrained_path: null
 
 wandb:
+  use_wandb: True
   project: PointNeXt-FantasticBreaks
+  entity: null
+  tags: [pointnext-b, fantasticbreaks, enriched]

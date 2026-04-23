@@ -33,6 +33,11 @@ def plot_confusion_matrix(cm, classes, save_path):
     plt.savefig(save_path)
     plt.close()
 
+def save_ply(points, save_path):
+    import pyvista as pv
+    cloud = pv.PolyData(points)
+    cloud.save(save_path)
+
 def plot_point_cloud_2d(points, title, save_path, labels=None):
     # points: (N, 3)
     fig = plt.figure(figsize=(15, 5))
@@ -180,13 +185,17 @@ def main():
     for i in range(len(all_preds)):
         if all_preds[i] == all_targets[i] and success_count < 5:
             title = f"Sample {i}: Pred={classes[all_preds[i]]}, GT={classes[all_targets[i]]} (SUCCESS)"
-            save_path = os.path.join(args.results_dir, 'inference_samples', f'success_{success_count}.png')
-            plot_point_cloud_2d(all_points[i], title, save_path)
+            save_path_png = os.path.join(args.results_dir, 'inference_samples', f'success_{success_count}.png')
+            save_path_ply = os.path.join(args.results_dir, 'inference_samples', f'success_{success_count}.ply')
+            plot_point_cloud_2d(all_points[i], title, save_path_png)
+            save_ply(all_points[i], save_path_ply)
             success_count += 1
         elif all_preds[i] != all_targets[i] and fail_count < 5:
             title = f"Sample {i}: Pred={classes[all_preds[i]]}, GT={classes[all_targets[i]]} (FAILURE)"
-            save_path = os.path.join(args.results_dir, 'inference_samples', f'failure_{fail_count}.png')
-            plot_point_cloud_2d(all_points[i], title, save_path)
+            save_path_png = os.path.join(args.results_dir, 'inference_samples', f'failure_{fail_count}.png')
+            save_path_ply = os.path.join(args.results_dir, 'inference_samples', f'failure_{fail_count}.ply')
+            plot_point_cloud_2d(all_points[i], title, save_path_png)
+            save_ply(all_points[i], save_path_ply)
             fail_count += 1
         
         if success_count >= 5 and fail_count >= 5:

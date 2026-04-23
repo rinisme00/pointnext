@@ -172,6 +172,20 @@ def main(gpu, cfg, profile=False):
             train_loader.sampler.set_epoch(epoch)
         if hasattr(train_loader.dataset, 'epoch'):
             train_loader.dataset.epoch = epoch - 1
+
+        # freezing encoder
+        freeze_epochs = cfg.get('freeze_epochs', 0)
+        if freeze_epochs > 0:
+            m = model.module if hasattr(model, 'module') else model
+            if epoch <= freeze_epochs:
+                for param in m.encoder.parameters():
+                    param.requires_grad = False
+                m.encoder.eval()
+            else:
+                for param in m.encoder.parameters():
+                    param.requires_grad = True
+                m.encoder.train()
+
         train_loss, train_macc, train_oa, _, _ = \
             train_one_epoch(model, train_loader,
                             optimizer, scheduler, epoch, cfg)
