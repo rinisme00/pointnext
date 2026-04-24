@@ -181,10 +181,14 @@ def main(gpu, cfg, profile=False):
                 for param in m.encoder.parameters():
                     param.requires_grad = False
                 m.encoder.eval()
+                if epoch % 10 == 0 or epoch == cfg.start_epoch:
+                    logging.info(f'[Freeze] Encoder frozen (epoch {epoch}/{freeze_epochs})')
             else:
                 for param in m.encoder.parameters():
                     param.requires_grad = True
                 m.encoder.train()
+                if epoch == freeze_epochs + 1:
+                    logging.info(f'[Unfreeze] Encoder unfrozen at epoch {epoch}')
 
         train_loss, train_macc, train_oa, _, _ = \
             train_one_epoch(model, train_loader,
