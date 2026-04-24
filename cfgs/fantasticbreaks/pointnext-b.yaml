@@ -20,7 +20,7 @@ model:
     blocks: [1, 2, 3, 2, 2, 1]     # B variant (matches BB config exactly)
     strides: [1, 2, 2, 2, 2, 1]
     width: 32                      # B variant width
-    in_channels: 11                # XYZ(3)+k1,k2,H,K,sa_v,dist,density,boundary_dist(8)
+    in_channels: 9                 # XYZ(3)+nx,ny,nz(3)+density,variation,entropy(3)
     sa_layers: 2
     sa_use_res: True
     radius: 0.15

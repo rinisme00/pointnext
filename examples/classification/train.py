@@ -221,25 +221,33 @@ def main(gpu, cfg, profile=False):
                             additioanl_dict={'best_val': best_val},
                             is_best=is_best
                             )
-    # test the last epoch
-    test_macc, test_oa, test_accs, test_cm = validate(model, test_loader, cfg)
-    print_cls_results(test_oa, test_macc, test_accs, best_epoch, cfg)
-    if writer is not None:
-        writer.add_scalar('test_oa', test_oa, epoch)
-        writer.add_scalar('test_macc', test_macc, epoch)
+    # test the last epoch (graceful: test split may not exist for all datasets)
+    try:
+        test_macc, test_oa, test_accs, test_cm = validate(model, test_loader, cfg)
+        print_cls_results(test_oa, test_macc, test_accs, best_epoch, cfg)
+        if writer is not None:
+            writer.add_scalar('test_oa', test_oa, epoch)
+            writer.add_scalar('test_macc', test_macc, epoch)
 
-    # test the best validataion model
-    best_epoch, _ = load_checkpoint(model, pretrained_path=os.path.join(
-        cfg.ckpt_dir, f'{cfg.run_name}_ckpt_best.pth'))
-    test_macc, test_oa, test_accs, test_cm = validate(model, test_loader, cfg)
-    if writer is not None:
-        writer.add_scalar('test_oa', test_oa, best_epoch)
-        writer.add_scalar('test_macc', test_macc, best_epoch)
-    print_cls_results(test_oa, test_macc, test_accs, best_epoch, cfg)
+        # test the best validation model
+        best_epoch, _ = load_checkpoint(model, pretrained_path=os.path.join(
+            cfg.ckpt_dir, f'{cfg.run_name}_ckpt_best.pth'))
+        test_macc, test_oa, test_accs, test_cm = validate(model, test_loader, cfg)
+        if writer is not None:
+            writer.add_scalar('test_oa', test_oa, best_epoch)
+            writer.add_scalar('test_macc', test_macc, best_epoch)
+        print_cls_results(test_oa, test_macc, test_accs, best_epoch, cfg)
+    except Exception as e:
+        logging.warning(f'End-of-training test evaluation skipped: {e}')
 
     if writer is not None:
         writer.close()
-    dist.destroy_process_group()
+    # Guard against single-GPU / non-distributed teardown crash
+    if cfg.distributed:
+        try:
+            dist.destroy_process_group()
+        except Exception:
+            pass
 
 def train_one_epoch(model, train_loader, optimizer, scheduler, epoch, cfg):
     loss_meter = AverageMeter()

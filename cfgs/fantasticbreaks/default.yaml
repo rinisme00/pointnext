@@ -10,9 +10,9 @@
 dataset:
   common:
     NAME: FantasticBreaksCls
-    data_dir: ../../data/fantastic-breaks-classification   # enriched HDF5 directory
+    data_dir: ../../data/fb_classification   # new 9D enriched directory
     num_points: 8192                # points subsampled per sample at runtime
-    enriched: True                  # load *_data_enriched.h5 ([B, N, 11] features)
+    enriched: True                  # load *_data_enriched.h5 ([B, N, 9] features)
   train:
     split: train
   val:
@@ -22,17 +22,17 @@ num_points: 8192    # points passed into the model
 num_classes: &nclass
   2
 
-feature_keys: pos   # pos = XYZ; geometric features (k1,k2,H,K,sa_v,dist,density,boundary_dist) added by adapter
+feature_keys: pos   # pos = XYZ; geometric features added by adapter (total 9D)
 
 # ---------------------------------------------------------------------------- #
 # Data augmentation
 # ---------------------------------------------------------------------------- #
 datatransforms:
-  train: [PointsToTensor, PointCloudScaling, PointCloudCenterAndNormalize, PointCloudRotation]
+  train: [PointsToTensor, PointCloudScaling, PointCloudCenterAndNormalize, PointCloudRotation, RandomJitter]
   val:   [PointsToTensor, PointCloudCenterAndNormalize]
   kwargs:
     scale:       [0.8, 1.2]
-    angle:       [0.0, 1.0, 0.0]   # rotate around Y (gravity) axis only
+    angle:       [0.0, 1.0, 0.0]   # rotate around Y axis only
     gravity_dim: 1
     jitter_sigma: 0.01
     jitter_clip: 0.05
@@ -40,35 +40,31 @@ datatransforms:
 # ---------------------------------------------------------------------------- #
 # DataLoader
 # ---------------------------------------------------------------------------- #
-# 240 train samples → batch_size=8 gives 30 steps/epoch (clean, no drop_last needed)
-batch_size:     8
+batch_size:     16
 val_batch_size: 16
 dataloader:
-  num_workers: 4
+  num_workers: 8
+  use_balanced_sampler: True
 
 # ---------------------------------------------------------------------------- #
 # Loss
 # ---------------------------------------------------------------------------- #
 criterion_args:
   NAME: LabelSmoothingCrossEntropy
-  label_smoothing: 0.1   # conservative smoothing for small binary dataset
-  weight: [1.0, 1.5]     # prioritize 'broken' class (index 1) recall
+  label_smoothing: 0.1
+  weight: [1.0, 1.0]
 
 # ---------------------------------------------------------------------------- #
 # Optimizer & scheduler
 # ---------------------------------------------------------------------------- #
-lr: 0.0005              # increased for head adaptation
+lr: 0.001
 optimizer:
   NAME: adamw
-  weight_decay: 0.01
-  filter_by_modules_names:
-    encoder:
-      lr_scale: 0.1     # protect pretrained features by learning 10x slower on backbone
+  weight_decay: 0.05
 
 sched:         cosine
-epochs:        150      # increased to allow 20 freeze epochs + recovery
-freeze_epochs: 20       # stabilize classification head first
-warmup_epochs: 5        # gentle warmup for stable gradients
+epochs:        300
+warmup_epochs: 20
 min_lr:        1.0e-6
 
 grad_norm_clip: 10
@@ -84,6 +80,6 @@ pretrained_path: null
 
 wandb:
   use_wandb: True
-  project: PointNeXt-FantasticBreaks
+  project: PointNeXt-Fracture-Classification
   entity: null
-  tags: [pointnext-b, fantasticbreaks, enriched]
+  tags: [pointnext-b, fantasticbreaks, enriched, 9D]

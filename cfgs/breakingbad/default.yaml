@@ -1,40 +1,37 @@
 # ============================================================================ #
 # Breaking Bad Binary Classification — default config
-# Pretrain on artifact + everyday/Vase subsets
-# Classes:  0 = complete (mode_0/piece_0.obj),  1 = broken (fractured_0/piece_*.obj)
-# Dataset:  494 train / 122 val  (balanced via undersampling)
+# Classes:  0 = complete,  1 = broken
 # ============================================================================ #
 
 # ---------------------------------------------------------------------------- #
 # Dataset
 # ---------------------------------------------------------------------------- #
-# Reuses FantasticBreaksCls adapter — same HDF5 format (data/label)
 dataset:
   common:
-    NAME: FantasticBreaksCls
-    data_dir: ../../data/breakingbad_classification   # enriched HDF5 directory
+    NAME: BreakingBadCls
+    data_dir: ../../data/bb_classification   # 9D enriched directory
     num_points: 8192
-    enriched: True                                             # load *_data_enriched.h5 ([B, N, 11])
+    enriched: True
   train:
     split: train
   val:
-    split: test
+    split: val
 
 num_points: 8192
 num_classes: &nclass
   2
 
-feature_keys: pos   # pos = XYZ; geometric features (k1,k2,H,K,sa_v,dist,density,boundary_dist) added by adapter
+feature_keys: pos
 
 # ---------------------------------------------------------------------------- #
 # Data augmentation
 # ---------------------------------------------------------------------------- #
 datatransforms:
-  train: [PointsToTensor, PointCloudScaling, PointCloudCenterAndNormalize, PointCloudRotation]
+  train: [PointsToTensor, PointCloudScaling, PointCloudCenterAndNormalize, PointCloudRotation, RandomJitter]
   val:   [PointsToTensor, PointCloudCenterAndNormalize]
   kwargs:
     scale:       [0.8, 1.2]
-    angle:       [0.0, 1.0, 0.0]   # rotate around Y (gravity) axis only
+    angle:       [0.0, 1.0, 0.0]
     gravity_dim: 1
     jitter_sigma: 0.01
     jitter_clip: 0.05
@@ -42,35 +39,32 @@ datatransforms:
 # ---------------------------------------------------------------------------- #
 # DataLoader
 # ---------------------------------------------------------------------------- #
-# 494 train samples → batch_size=2 gives ~247 steps/epoch
-# batch_size=2 to accommodate PointNeXt-XL (width=64) on 24GB RTX 3090
-batch_size:     2
-val_batch_size: 2
+batch_size:     16
+val_batch_size: 16
+step_per_update: 2   # Gradient Accumulation to maintain effective batch size of 32
 dataloader:
   num_workers: 4
-
-use_amp: True        # Enable Mixed Precision to save VRAM
-step_per_update: 2   # Accumulate 2 steps to maintain total batch size of 16 (2 * 4 GPUs * 2 steps)
-sync_bn: True
+  use_balanced_sampler: True   # CRITICAL for Breaking Bad
 
 # ---------------------------------------------------------------------------- #
 # Loss
 # ---------------------------------------------------------------------------- #
 criterion_args:
-  NAME: SmoothCrossEntropy
+  NAME: LabelSmoothingCrossEntropy
   label_smoothing: 0.1
+  weight: [1.0, 1.0]
 
 # ---------------------------------------------------------------------------- #
 # Optimizer & scheduler
 # ---------------------------------------------------------------------------- #
-lr: 0.002               # Reverted for stability
+lr: 0.001
 optimizer:
   NAME: adamw
-  weight_decay: 0.05   # stronger regularization for XL model
+  weight_decay: 0.05
 
 sched:         cosine
-epochs:        150      # more epochs for pretraining from scratch
-warmup_epochs: 10
+epochs:        300
+warmup_epochs: 20
 min_lr:        1.0e-6
 
 grad_norm_clip: 10
@@ -79,13 +73,13 @@ grad_norm_clip: 10
 # io and misc
 # ---------------------------------------------------------------------------- #
 log_dir: breakingbad
-print_freq: 10
+print_freq: 50
 val_freq:   1
 
 pretrained_path: null
 
 wandb:
   use_wandb: True
-  project: breaking-bad-pretraining
+  project: PointNeXt-Fracture-Classification
   entity: null
-  tags: [pointnext-xl, breakingbad, pretraining]
+  tags: [pointnext-b, breakingbad, enriched, 9D]
