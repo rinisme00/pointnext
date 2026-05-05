@@ -1,0 +1,48 @@
+_base_: default.yaml
+# PointNeXt-B for Breaking Bad binary classification (3D-only XYZ)
+# Same architecture as PointNeXt-B but with in_channels: 3
+
+model:
+  NAME: BaseCls
+  encoder_args:
+    NAME: PointNextEncoder
+    blocks: [1, 2, 3, 2, 2, 1]
+    strides: [1, 2, 2, 2, 2, 1]
+    width: 32
+    in_channels: 3                 # XYZ only
+    sa_layers: 2
+    sa_use_res: True
+    radius: 0.15
+    radius_scaling: 1.5
+    nsample: 32
+    expansion: 4
+    aggr_args:
+      feature_type: 'dp_fj'
+      reduction: 'max'
+    group_args:
+      NAME: 'ballquery'
+      normalize_dp: True
+    conv_args:
+      order: conv-norm-act
+    act_args:
+      act: 'relu'
+    norm_args:
+      norm: 'bn'
+  cls_args:
+    NAME: ClsHead
+    num_classes: 2
+    mlps: [512, 256]
+    norm_args:
+      norm: 'bn1d'
+
+dataset:
+  common:
+    NAME: BreakingBadCls
+    data_dir: data/bb_3d
+    use_3d_only: True
+    enriched: False
+    num_points: 2048
+
+wandb:
+  use_wandb: True
+  tags: [pointnext-b, breakingbad, 3d-only]
